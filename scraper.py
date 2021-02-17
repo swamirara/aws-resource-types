@@ -3,6 +3,7 @@ Scrapes all resource types from AWS documentation.
 
 How to run::
 
+    pip install scrapy
     scrapy runspider scraper.py -o resource_types.json
 
 Output will be a JSON file::
@@ -20,8 +21,9 @@ import scrapy
 
 class ResourceTypeSpider(scrapy.Spider):
     name = 'tocspider'
-    start_urls = ['https://docs.aws.amazon.com/IAM/latest/UserGuide/toc-contents.json']
+    start_urls = ['https://docs.aws.amazon.com/service-authorization/latest/reference/toc-contents.json']
     download_delay = 0.250
+    final_list = []
 
     def parse(self, response):
         j = json.loads(response.text)
@@ -31,18 +33,18 @@ class ResourceTypeSpider(scrapy.Spider):
             return [x for x in xs if x['title'] == title][0]
 
         j = select_title(j, 'Reference')['contents']
-        j = select_title(j, 'Policy Reference')['contents']
-        j = select_title(j, 'Actions, Resources, and Condition Keys')['contents']
+        j = select_title(j, 'Actions, resources, and condition keys')['contents']
 
         for page in j:
             title = page['title']
             href = page['href']
             yield response.follow(href, self.parse_ref)
 
-    def parse_ref(self, response):
-        service = response.xpath('//h2[starts-with(text(),"Resource Types Defined by")]/text()').get().replace("Resource Types Defined by", "").strip()
 
-        trs = response.xpath("//th[text()='Resource Types']/../../..//tr")[1:]
+    def parse_ref(self, response):
+        res_service = response.xpath('//h2[starts-with(text(),"Resource types defined by")]/text()').get()
+        service = str(res_service).replace("Resource types defined by", "").strip()
+        trs = response.xpath("//th[text()='Resource types']/../../..//tr")[1:]
 
         for tr in trs:
             tds = tr.xpath('td')
