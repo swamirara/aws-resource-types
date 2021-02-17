@@ -30,7 +30,6 @@ class ResourceTypeSpider(scrapy.Spider):
         j = j['contents']
 
         def select_title(xs, title):
-            print("title", title)
             return [x for x in xs if x['title'] == title][0]
 
         j = select_title(j, 'Reference')['contents']
